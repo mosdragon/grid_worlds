@@ -11,6 +11,7 @@ import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.Planner;
 import burlap.behavior.singleagent.planning.stochastic.policyiteration.PolicyIteration;
 import burlap.behavior.singleagent.planning.stochastic.valueiteration.ValueIteration;
+import burlap.debugtools.DPrint;
 import burlap.domain.singleagent.blockdude.BlockDude;
 import burlap.domain.singleagent.blockdude.BlockDudeVisualizer;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
@@ -34,11 +35,11 @@ import java.util.Random;
 
 public class GridSmall {
 
-  static final double gamma = 0.85;
+  static final double gamma = 0.5;
   static final double initvals = 0.5;
-  static final double learning_rate = 0.2;
+  static final double learning_rate = 0.3;
 
-  static final double goal_reward = 10;
+  static final double goal_reward = 100;
   static final double other_reward = -0.5;
 
   static final int dimX = 11;
@@ -57,21 +58,25 @@ public class GridSmall {
   private static RewardFunction rf;
   private static State initialState;
 
-
+  //  Random number generator --> initialized with a seed in init() to make replicate results
   private static Random random = new Random();
 
+
+  //  For Q-learning, the number of trials and episodes per trial
   private static final int TRIALS = 5;
-  private static final int EPISODES = 300;
+  private static final int EPISODES = 100;
 
+  //  If algo doesnt see more than this much improvement between runs, terminates
   static final double improvement_threshold = 1e-2;
-
-
-  static int valid_states = 0;
 
 
   //set up the state hashing system for looking up states
   static final SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
 
+
+  /**
+   * Initializes the grid world. This one is the small Grid world
+   */
   public static void init() {
     random.setSeed(0xABCDEF);
 
@@ -99,19 +104,11 @@ public class GridSmall {
     //reward function definition
     rf = new GoalBasedRF(new TFGoalCondition(tf), goal_reward, other_reward);
 
-
-//    valid_states = 0;
-//    for (int[] row : gw.getMap()) {
-//      for (int cell : row) {
-//        if (cell == 0) {
-//          valid_states++;
-//        }
-//      }
-//    }
-//    System.out.println("Total possible states: " + valid_states);
-
   }
 
+  /**
+   * Lets you visually play on this grid world.
+   */
   private static void visualGame() {
     Visualizer v = GridWorldVisualizer.getVisualizer(gw.getMap());
     VisualExplorer exp = new VisualExplorer(domain, v, initialState);
@@ -125,10 +122,8 @@ public class GridSmall {
     exp.initGUI();
   }
 
+
   private static void simulateQL() {
-
-    long start = System.nanoTime();
-
     //initial state generator
     final ConstantStateGenerator sg = new ConstantStateGenerator(initialState);
 
@@ -162,24 +157,20 @@ public class GridSmall {
     //start experiment
     exp.startExperiment();
 
-    long end = System.nanoTime();
-    long deltaTime = end - start;
-    double seconds = deltaTime / (double) (1E9);
-    System.out.println("================================================");
-    System.out.println("Finished QL: " + seconds + " s.");
-    System.out.println("================================================");
-
 
   }
 
 
   private static void simulateVI() {
 
-
     long start = System.nanoTime();
 
+    int max_iterations = 100;
+
     Planner planner = new ValueIteration(domain, rf, tf, gamma, hashingFactory,
-        improvement_threshold, EPISODES);
+        improvement_threshold, max_iterations);
+    planner.setDebugCode(1);
+
     Policy p = planner.planFromState(initialState);
 
     Visualizer v = GridWorldVisualizer.getVisualizer(gw.getMap());
@@ -193,25 +184,32 @@ public class GridSmall {
     for(int i = 0; i < 5; i++){
       p.evaluateBehavior(env);
       env.resetEnvironment();
-      System.out.println("Done with iteration: " + i+1);
+      System.out.println("Done with iteration: " + (i + 1));
     }
 
     long end = System.nanoTime();
     long deltaTime = end - start;
     double seconds = deltaTime / (double) (1E9);
     System.out.println("================================================");
-    System.out.println("Finished VI: " + seconds  + " s.");
+    System.out.println("Finished VI: " + seconds + " s.");
     System.out.println("================================================");
 
   }
+
 
   private static void simulatePI() {
 
     long start = System.nanoTime();
 
+    int max_evaluation_iterations = 100;
+    int max_policy_iterations = 100;
+
     Planner planner;
     planner = new PolicyIteration(domain, rf, tf, gamma, hashingFactory, improvement_threshold,
-        EPISODES, EPISODES);
+        max_evaluation_iterations, max_policy_iterations);
+
+    planner.setDebugCode(1);
+
     Policy p = planner.planFromState(initialState);
 
     Visualizer v = GridWorldVisualizer.getVisualizer(gw.getMap());
@@ -225,7 +223,7 @@ public class GridSmall {
     for(int i = 0; i < 5; i++){
       p.evaluateBehavior(env);
       env.resetEnvironment();
-      System.out.println("Done with iteration: " + i + 1);
+      System.out.println("Done with iteration: " + (i + 1));
     }
 
     long end = System.nanoTime();
@@ -239,9 +237,12 @@ public class GridSmall {
 
   public static void main(String [] args) {
 
+//    Enable debugging
+    DPrint.toggleUniversal(true);
+    DPrint.toggleCode(1, true);
+
     init();
-    visualGame();
-//    simulateQL();
+//    visualGame();
     simulateVI();
     simulatePI();
     simulateQL();

@@ -33,7 +33,7 @@ import burlap.oomdp.visualizer.Visualizer;
 
 import java.util.Random;
 
-public class PlotGiant {
+public class GridLarge {
 
   static final double gamma = 0.95;
   static final double initvals = 0.5;
