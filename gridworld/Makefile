@@ -3,16 +3,8 @@
 all:
 	mvn compile
 
-small_grid:
+small:
 	mvn exec:java -Dexec.mainClass="myProj.GridSmall"
 
-small_plot:
-	mvn exec:java -Dexec.mainClass="myProj.PlotSmall"
-
-
-lander:
-	mvn exec:java -Dexec.mainClass="myProj.Lander"
-
-
-mtcar:
-	mvn exec:java -Dexec.mainClass="myProj.MtnCarTest"
+large:
+	mvn exec:java -Dexec.mainClass="myProj.GridLarge"

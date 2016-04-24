@@ -1,5 +1,4 @@
 *.class
 gridworld/target/
-gridworld/.idea/
 .DS_Store
 RL_sim/
