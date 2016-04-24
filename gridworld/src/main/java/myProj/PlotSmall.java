@@ -8,6 +8,7 @@ import burlap.behavior.singleagent.learning.LearningAgent;
 import burlap.behavior.singleagent.learning.LearningAgentFactory;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.domain.singleagent.gridworld.GridWorldDomain;
+import burlap.domain.singleagent.gridworld.GridWorldVisualizer;
 import burlap.oomdp.auxiliary.common.ConstantStateGenerator;
 import burlap.oomdp.auxiliary.common.SinglePFTF;
 import burlap.oomdp.auxiliary.stateconditiontest.TFGoalCondition;
@@ -17,7 +18,9 @@ import burlap.oomdp.core.states.State;
 import burlap.oomdp.singleagent.RewardFunction;
 import burlap.oomdp.singleagent.common.GoalBasedRF;
 import burlap.oomdp.singleagent.environment.SimulatedEnvironment;
+import burlap.oomdp.singleagent.explorer.VisualExplorer;
 import burlap.oomdp.statehashing.SimpleHashableStateFactory;
+import burlap.oomdp.visualizer.Visualizer;
 
 public class PlotSmall {
 
@@ -44,38 +47,51 @@ public class PlotSmall {
     final ConstantStateGenerator sg = new ConstantStateGenerator(s);
 
 
+
+    Visualizer v = GridWorldVisualizer.getVisualizer(gw.getMap());
+    VisualExplorer exp = new VisualExplorer(domain, v, s);
+
+    //set control keys to use w-s-a-d
+    exp.addKeyAction("w", GridWorldDomain.ACTIONNORTH);
+    exp.addKeyAction("s", GridWorldDomain.ACTIONSOUTH);
+    exp.addKeyAction("a", GridWorldDomain.ACTIONWEST);
+    exp.addKeyAction("d", GridWorldDomain.ACTIONEAST);
+
+    exp.initGUI();
+
+
     //set up the state hashing system for looking up states
-    final SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
-
-
-    /**
-     * Create factory for Q-learning agent
-     */
-    LearningAgentFactory qLearningFactory = new LearningAgentFactory() {
-
-      public String getAgentName() {
-        return "Q-learning";
-      }
-
-      public LearningAgent generateAgent() {
-        return new QLearning(domain, 0.99, hashingFactory, 0.3, 0.1);
-      }
-    };
-
-    //define learning environment
-    SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, sg);
-
-    //define experiment
-    LearningAlgorithmExperimenter exp = new LearningAlgorithmExperimenter(env,
-        10, 100, qLearningFactory);
-
-    exp.setUpPlottingConfiguration(500, 250, 2, 1000, TrialMode.MOSTRECENTANDAVERAGE,
-        PerformanceMetric.CUMULATIVESTEPSPEREPISODE,
-        PerformanceMetric.AVERAGEEPISODEREWARD);
-
-
-    //start experiment
-    exp.startExperiment();
+//    final SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
+//
+//
+//    /**
+//     * Create factory for Q-learning agent
+//     */
+//    LearningAgentFactory qLearningFactory = new LearningAgentFactory() {
+//
+//      public String getAgentName() {
+//        return "Q-learning";
+//      }
+//
+//      public LearningAgent generateAgent() {
+//        return new QLearning(domain, 0.99, hashingFactory, 0.3, 0.1);
+//      }
+//    };
+//
+//    //define learning environment
+//    SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, sg);
+//
+//    //define experiment
+//    LearningAlgorithmExperimenter exp = new LearningAlgorithmExperimenter(env,
+//        10, 100, qLearningFactory);
+//
+//    exp.setUpPlottingConfiguration(500, 250, 2, 1000, TrialMode.MOSTRECENTANDAVERAGE,
+//        PerformanceMetric.CUMULATIVESTEPSPEREPISODE,
+//        PerformanceMetric.AVERAGEEPISODEREWARD);
+//
+//
+//    //start experiment
+//    exp.startExperiment();
 
 
   }
