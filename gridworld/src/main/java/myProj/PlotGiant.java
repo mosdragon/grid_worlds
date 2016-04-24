@@ -64,12 +64,12 @@ public class PlotGiant {
     gw = new GridWorldDomain(dimX, dimY);
 
     gw.setProbSucceedTransitionDynamics(0.8); //stochastic transitions with 0.8 success rate
-    domain = gw.generateDomain(); //generate the grid world domain
 
     final int num_walls = 300;
     int[] xwalls = new int[num_walls];
     int[] ywalls = new int[num_walls];
 
+//    Choose x and y coords for walls
     for (int i = 0; i < xwalls.length && i < ywalls.length; i++) {
       int valx = random.nextInt(dimX);
       xwalls[i] = valx;
@@ -78,16 +78,15 @@ public class PlotGiant {
       ywalls[i] = valy;
     }
 
-
-//    int[] xwalls = {4, 5, 6, 12, 15, 18, 30, 36, 37, 38, 39, 40};
-//    int[] ywalls = {3, 4, 5, 6, 40, 42, 33, 27, 12, 19, 32, 33};
-
+//    Place the walls
     for (int i = 0; i < xwalls.length && i < ywalls.length; i++) {
       int xwall = xwalls[i];
       int ywall = ywalls[i];
 
+//      Random wall length
       int walllen = random.nextInt(5);
 
+//      Randomly determine if wall is vertical or horizontal
       if (random.nextBoolean()) {
         gw.horizontalWall(xwall, Math.min(xwall + walllen, dimX - 1), ywall);
       } else {
@@ -95,76 +94,85 @@ public class PlotGiant {
       }
     }
 
+
+
+    domain = gw.generateDomain(); //generate the grid world domain
+
+    //setup initial state
+    initialState = GridWorldDomain.getOneAgentOneLocationState(domain);
+
+//    Begin agent at (0,0)
+    GridWorldDomain.setAgent(initialState, 0, 0);
+
+//    Set goal at (goalX, goalY)
+    GridWorldDomain.setLocation(initialState, 0, goalX, goalY);
+
     //ends when the agent reaches a location
     tf = new SinglePFTF(domain.
         getPropFunction(GridWorldDomain.PFATLOCATION));
 
     //reward function definition
-    rf = new GoalBasedRF(new TFGoalCondition(tf), 5., -0.1);
-
-
-    //setup initial state
-    initialState = GridWorldDomain.getOneAgentOneLocationState(domain);
-    GridWorldDomain.setAgent(initialState, 0, 0);
-    GridWorldDomain.setLocation(initialState, 0, goalX, goalY);
-
+    rf = new GoalBasedRF(new TFGoalCondition(tf), goal_reward, other_reward);
 
   }
 
-  public static void main(String [] args){
-
-    init();
-
-//    create visualizer and explorer
+  private static void visualGame() {
     Visualizer v = GridWorldVisualizer.getVisualizer(gw.getMap());
-    VisualExplorer vexp = new VisualExplorer(domain, v, initialState);
+    VisualExplorer exp = new VisualExplorer(domain, v, initialState);
 
     //set control keys to use w-s-a-d
-    vexp.addKeyAction("w", GridWorldDomain.ACTIONNORTH);
-    vexp.addKeyAction("s", GridWorldDomain.ACTIONSOUTH);
-    vexp.addKeyAction("a", GridWorldDomain.ACTIONWEST);
-    vexp.addKeyAction("d", GridWorldDomain.ACTIONEAST);
+    exp.addKeyAction("w", GridWorldDomain.ACTIONNORTH);
+    exp.addKeyAction("s", GridWorldDomain.ACTIONSOUTH);
+    exp.addKeyAction("a", GridWorldDomain.ACTIONWEST);
+    exp.addKeyAction("d", GridWorldDomain.ACTIONEAST);
 
-    vexp.initGUI();
+    exp.initGUI();
+  }
 
-
+  private static void simulateQL() {
     //initial state generator
-//    final ConstantStateGenerator sg = new ConstantStateGenerator(initialState);
-//
-//    //set up the state hashing system for looking up states
-//    final SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
-//
-//    /**
-//     * Create factory for Q-learning agent
-//     */
-//    LearningAgentFactory qLearningFactory = new LearningAgentFactory() {
-//
-//      public String getAgentName() {
-//        return "Q-learning";
-//      }
-//
-//      public LearningAgent generateAgent() {
-//        return new QLearning(domain, gamma, hashingFactory, initvals, learning_rate);
-//      }
-//    };
-//
-//    //define learning environment
-//    SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, sg);
-//
-//    //define experiment
-//    LearningAlgorithmExperimenter exp = new LearningAlgorithmExperimenter(env,
-//        TRIALS, EPISODES, qLearningFactory);
-//
-//    exp.setUpPlottingConfiguration(500, 250, 2, 1000, TrialMode.MOSTRECENTANDAVERAGE,
-//        PerformanceMetric.CUMULATIVESTEPSPEREPISODE,
-//        PerformanceMetric.AVERAGEEPISODEREWARD,
-//        PerformanceMetric.CUMULTAIVEREWARDPEREPISODE);
-//
-//
-//    //start experiment
-//    exp.startExperiment();
+    final ConstantStateGenerator sg = new ConstantStateGenerator(initialState);
+
+    //set up the state hashing system for looking up states
+    final SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
+
+    /**
+     * Create factory for Q-learning agent
+     */
+    LearningAgentFactory qLearningFactory = new LearningAgentFactory() {
+
+      public String getAgentName() {
+        return "Q-learning";
+      }
+
+      public LearningAgent generateAgent() {
+        return new QLearning(domain, gamma, hashingFactory, initvals, learning_rate);
+      }
+    };
+
+    //define learning environment
+    SimulatedEnvironment env = new SimulatedEnvironment(domain, rf, tf, sg);
+
+    //define experiment
+    LearningAlgorithmExperimenter exp = new LearningAlgorithmExperimenter(env,
+        TRIALS, EPISODES, qLearningFactory);
+
+    exp.setUpPlottingConfiguration(500, 250, 2, 1000, TrialMode.MOSTRECENTANDAVERAGE,
+        PerformanceMetric.CUMULATIVESTEPSPEREPISODE,
+        PerformanceMetric.AVERAGEEPISODEREWARD,
+        PerformanceMetric.CUMULTAIVEREWARDPEREPISODE);
+
+
+    //start experiment
+    exp.startExperiment();
 
 
   }
 
+  public static void main(String [] args) {
+
+    init();
+    visualGame();
+
+  }
 }
