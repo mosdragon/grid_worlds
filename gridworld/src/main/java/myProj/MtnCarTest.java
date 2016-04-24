@@ -23,6 +23,8 @@ import burlap.behavior.singleagent.vfa.common.ConcatenatedObjectFeatureVectorGen
 import burlap.behavior.singleagent.vfa.fourier.FourierBasis;
 import burlap.behavior.valuefunction.ValueFunctionInitialization;
 import burlap.domain.singleagent.blockdude.BlockDude;
+import burlap.domain.singleagent.blockdude.BlockDudeLevelConstructor;
+import burlap.domain.singleagent.blockdude.BlockDudeTF;
 import burlap.domain.singleagent.blockdude.BlockDudeVisualizer;
 import burlap.domain.singleagent.cartpole.InvertedPendulum;
 import burlap.domain.singleagent.frostbite.FrostbiteDomain;
@@ -78,14 +80,6 @@ public class MtnCarTest {
   static TerminalFunction tf;
   static RewardFunction rf;
 
-  static StateGenerator rStateGen;
-  static SARSCollector collector;
-  static SARSData dataset;
-
-  static ConcatenatedObjectFeatureVectorGenerator featureVectorGenerator;
-
-  static FourierBasis fb;
-
   static double improvement_threshold = 1e-2;
 
   static int blocks = 5;
@@ -96,8 +90,12 @@ public class MtnCarTest {
 
     Planner planner = new PolicyIteration(domain, rf, tf, gamma, hashingFactory,
         improvement_threshold, iterations, iterations);
-    LSPI lspi = new LSPI(domain, gamma, fb, dataset);
-    Policy p = lspi.runPolicyIteration(iterations, 1e-6);
+
+    planner.toggleDebugPrinting(true);
+//    Policy p = lspi.runPolicyIteration(iterations, 1e-6);
+    State initialState = BlockDudeLevelConstructor.getLevel2(domain);
+
+    Policy p = planner.planFromState(initialState);
 
     Visualizer v = BlockDudeVisualizer.getVisualizer(bdude.getMaxx(), bdude.getMaxy());
     VisualActionObserver vob = new VisualActionObserver(domain, v);
@@ -128,7 +126,7 @@ public class MtnCarTest {
 //
 //    Policy p = vi.planFromState(BlockDude.getCleanState(domain, bdude.physParams));
 
-    State initialState = BlockDude.getUninitializedState(domain, blocks);
+    State initialState = BlockDudeLevelConstructor.getLevel2(domain);
 
     Planner planner = new ValueIteration(domain, rf, tf, gamma, hashingFactory,
         improvement_threshold, iterations);
@@ -160,29 +158,18 @@ public class MtnCarTest {
   public static void init() {
     bdude = new BlockDude();
     domain = bdude.generateDomain();
-    tf = new BlockDude.ClassicMCTF();
+    tf = new BlockDudeTF();
     rf = new GoalBasedRF(tf, 100);
-
-//    State s = LunarLanderDomain.getCleanState(domain, 0);
-
-    rStateGen = new MCRandomStateGenerator(domain);
-    collector = new SARSCollector.UniformRandomSARSCollector(domain);
-    dataset = collector.collectNInstances(rStateGen, rf, 5000, 20, tf, null);
-
-    featureVectorGenerator =
-        new ConcatenatedObjectFeatureVectorGenerator(true, BlockDude.CLASSAGENT);
-
-    fb = new FourierBasis(featureVectorGenerator, 4);
 
   }
 
   public static void main(String[] args){
 
     init();
-//    runPI();
+    runPI();
 //    runVI();
 
-    BlockDude.main(null);
+//    BlockDude.main(null);
 
   }
 
